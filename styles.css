@@ -2,6 +2,10 @@ body {
     background-color: lightslategray;
 }
 
+h1 {
+    text-align: center;
+}
+
 #canvas {
     margin: auto;
     width: 500px;
@@ -14,6 +18,8 @@ body {
 
 
 
-input {
-    margin: auto;
+
+
+footer{
+    text-align: center;
 }
