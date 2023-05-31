@@ -4,7 +4,7 @@ let sizeRange = document.getElementById("sizeRange");
 let pixelOutput = document.getElementById("output");
 let refreshButton = document.getElementById("refresh");
 
-
+createCanvas(16); //default canvas
 
 
 sizeRange.oninput = () => pixelOutput.innerHTML = sizeRange.value;
