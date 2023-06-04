@@ -10,7 +10,11 @@
 let grid = []
 let colorGrid = []
 let dim = 100
-let erase = 0
+const controls = {
+    eraser: false,
+    lifted: false
+}
+
 let cellSize = 0
 let dimSlider
 let colorPallete = { x: 650, y: 70, cellSize: 100, w: 3, h: 5 }
@@ -22,8 +26,8 @@ function setup() {
     background(255)
     noStroke()
     cellSize = windowHeight / dim
-    grid = createRandomGrid(dim)
-    colorGrid = createColorPallette([colorPallete.w, colorPallete.h])
+    grid = createRandomGrid([dim, dim])
+    colorGrid = createRandomGrid([colorPallete.w, colorPallete.h])
     showGrid(colorGrid, { x: colorPallete.x, y: colorPallete.y }, colorPallete.cellSize)
     dimSlider = createSlider(1, 124, 20, 1)
     dimSlider.position(650, 10)
@@ -32,7 +36,7 @@ function setup() {
 const reset = (newDim) => {
     grid = []
     dim = newDim
-    grid = createRandomGrid(dim)
+    grid = createRandomGrid([dim, dim])
     cellSize = windowHeight / dim
 }
 
@@ -43,9 +47,9 @@ const showGrid = (grid, start, cellSize) => {
     }))
 }
 
-const createColorPallette = (dimCol) => {
-    const x = dimCol[0]
-    const y = dimCol[1]
+const createRandomGrid = (dims) => {
+    const x = dims[0]
+    const y = dims[1]
     const taborGreat = []
     for (let i = 0; i < x; i++) {
         const Salem = []
@@ -57,54 +61,64 @@ const createColorPallette = (dimCol) => {
     return taborGreat
 }
 
-const createRandomGrid = (dim) => {
-    const tempGrid = []
-    for (let y = 0; y < dim; y++) {
-        const row = []
-        for (let x = 0; x < dim; x++) {
-            row.push([random(255), random(255), random(255)])
-        }
-        tempGrid.push(row)
-    }
-    return tempGrid
-}
-
 const setColorTo = (color, grid) => {
     grid.forEach((row, x) => row.forEach((cell, y) => grid[x][y] = [color[0], color[1], color[2]]))
 }
 
 const paintCell = (x, y) => {
-    grid[floor(x / cellSize)][floor(y / cellSize)] = erase ? [0, 0, 0] : paintCol
+    grid[floor(x / cellSize)][floor(y / cellSize)] = isEraserDown() ? [0, 0, 0] : paintCol
 }
 
 function keyPressed() {
     if (key == ' ') toggleEraser()
 }
 
-const toggleEraser = () => erase = erase ? 0 : 1
+function keyIsDown() {
+    if (key == 'SHIFT_KEY') lifted = true
+}
+
+const toggleEraser = () => controls.eraser = controls.eraser ? false : true
+
+const liftPen = () => controls.lifted = true
+
+const dropPen = () => controls.lifted = false
+
+const isEraserDown = () => controls.eraser
+
+const isLifted = () => controls.lifted
 
 function touchStarted() {
-    // selectCell(mouseX, mouseY)
-    if (
-        mouseX > colorPallete.x &&
-        mouseX < colorPallete.x + colorPallete.cellSize * colorPallete.w &&
-        mouseY > colorPallete.y &&
-        mouseY < colorPallete.y + colorPallete.cellSize * colorPallete.h) {
-        if (erase) toggleEraser()
-        const color = colorGrid[floor((mouseX - colorPallete.x) / colorPallete.cellSize)][floor((mouseY - colorPallete.y) / colorPallete.cellSize)]
-        paintCol = color
+    if (isInColorPalletteBounds({ x: mouseX, y: mouseY })) {
+        if (isEraserDown()) toggleEraser()
+        paintCol = colorGrid[floor((mouseX - colorPallete.x) / colorPallete.cellSize)][floor((mouseY - colorPallete.y) / colorPallete.cellSize)]
     }
 }
 
+const isInColorPalletteBounds = (pos) => {
+    return pos.x > colorPallete.x &&
+        pos.x < colorPallete.x + colorPallete.cellSize * colorPallete.w &&
+        pos.y > colorPallete.y &&
+        pos.y < colorPallete.y + colorPallete.cellSize * colorPallete.h
+}
+
+const isInGridBounds = (pos) => {
+    return pos.x < cellSize * dim && pos.y < dim * cellSize
+}
+
 function mouseMoved() {
-    if (mouseX < cellSize * dim && mouseY < dim * cellSize) paintCell(mouseX, mouseY)
+    if (isInGridBounds({ x: mouseX, y: mouseY }) && !isLifted()) paintCell(mouseX, mouseY)
+}
+
+function keyReleased() {
+    if (keyCode == 16) {
+        console.log("dropped")
+        dropPen()
+    }
+    return false
 }
 
 function draw() {
     if (dim != dimSlider.value()) reset(dimSlider.value())
-
     showGrid(grid, { x: 0, y: 0 }, cellSize)
-
-    // showGrid(colorGrid,{x:650,y:70},100)
-
+    if (keyIsDown(SHIFT)) liftPen()
 }
